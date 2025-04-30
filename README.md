@@ -1,8 +1,6 @@
 # pdfpages-zsh
 
-**`pdfpages-zsh` provides an efficient, user-friendly command-line tool for counting the number of pages in PDF files, either individually or recursively in directories.**
-
-With `pdfpages-zsh`, you can quickly calculate page counts for PDF files, whether they're located in a single directory or spread across multiple directories. It streamlines the process with color-coded output and clear error handling.
+`pdfpages-zsh` provides an efficient, user-friendly command-line tool for counting the number of pages in PDF files, either individually or recursively in directories. It allows you to quickly calculate page counts for PDF files located in a single directory or spread across multiple directories, streamlining the process with color-coded output and clear error handling.
 
 ## Key Features
 
