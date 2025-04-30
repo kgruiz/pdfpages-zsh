@@ -12,7 +12,7 @@ if [[ -z $YELLOW ]]; then readonly YELLOW="${ESC}[0;33m"; fi
 if [[ -z $MAGENTA ]]; then readonly MAGENTA="${ESC}[0;35m"; fi
 
 # show usage/help
-function ShowHelp {
+function PDFPages_ShowHelp {
     printf "${BOLD_CYAN}Usage:${RESET} pdfpages ${BOLD_YELLOW}<file|dir>${RESET} ${MAGENTA}[options]${RESET}\n\n"
     printf "${BOLD_CYAN}Options:${RESET}\n"
     printf "  ${BOLD_MAGENTA}-n, --no-recursive${RESET}   Do not recurse into subdirectories\n"
@@ -65,7 +65,7 @@ function pdfpages {
     fi
 
     if [[ $1 == "-h" || $1 == "--help" ]]; then
-        ShowHelp
+        PDFPages_ShowHelp
         return 0
     fi
 
@@ -77,7 +77,7 @@ function pdfpages {
             shift
             ;;
         -h | --help)
-            ShowHelp
+            PDFPages_ShowHelp
             return 0
             ;;
         --)
