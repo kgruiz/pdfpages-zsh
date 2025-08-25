@@ -30,10 +30,8 @@ function pdfpages {
     function CheckDependencies {
         if ! command -v pdfinfo >/dev/null 2>&1; then
             printf "${BOLD_RED}Error:${RESET} pdfinfo not found. ${YELLOW}Install poppler-utils or add pdfinfo to PATH.${RESET}\n" >&2
-            unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
             return 1
         fi
-        unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
         return 0
     }
 
@@ -43,19 +41,16 @@ function pdfpages {
 
         output=$(pdfinfo "$file" 2>&1) || {
             printf "${BOLD_RED}Error:${RESET} pdfinfo failed for ${BOLD_YELLOW}'%s'${RESET}.\n" "$file" >&2
-            unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
             return 1
         }
 
         pages=$(echo "$output" | awk '/^Pages:/ {print $2}')
         if ! [[ $pages =~ ^[0-9]+$ ]]; then
             printf "${BOLD_RED}Error:${RESET} could not parse page count for ${BOLD_YELLOW}'%s'${RESET}.\n" "$file" >&2
-            unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
             return 1
         fi
 
         echo "$pages"
-        unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
         return 0
     }
 
