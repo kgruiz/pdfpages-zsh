@@ -1,71 +1,81 @@
 # PDF Page Counter – `pdfpages` command
 
-# color codes (only define if not already set)
-if [[ -z $ESC ]]; then readonly ESC="\033"; fi
-if [[ -z $RESET ]]; then readonly RESET="${ESC}[0m"; fi
-if [[ -z $BOLD_CYAN ]]; then readonly BOLD_CYAN="${ESC}[1;36m"; fi
-if [[ -z $DIM_WHITE ]]; then readonly DIM_WHITE="${ESC}[2;37m"; fi
-if [[ -z $DIM_BLUE ]]; then readonly DIM_BLUE="${ESC}[2;34m"; fi
-if [[ -z $GREEN ]]; then readonly GREEN="${ESC}[0;32m"; fi
-if [[ -z $BOLD_RED ]]; then readonly BOLD_RED="${ESC}[1;31m"; fi
-if [[ -z $YELLOW ]]; then readonly YELLOW="${ESC}[0;33m"; fi
-if [[ -z $MAGENTA ]]; then readonly MAGENTA="${ESC}[0;35m"; fi
-
-# show usage/help
-function PDFPages_ShowHelp {
-    printf "${BOLD_CYAN}Usage:${RESET} pdfpages ${BOLD_YELLOW}<file|dir>${RESET} ${MAGENTA}[options]${RESET}\n\n"
-    printf "${BOLD_CYAN}Options:${RESET}\n"
-    printf "  ${BOLD_MAGENTA}-n, --no-recursive${RESET}   Do not recurse into subdirectories\n"
-    printf "  ${BOLD_MAGENTA}-h, --help${RESET}           Show this help message and exit\n"
-}
-
-# verify pdfinfo is installed
-function CheckDependencies {
-    if ! command -v pdfinfo >/dev/null 2>&1; then
-        printf "${BOLD_RED}Error:${RESET} pdfinfo not found. ${YELLOW}Install poppler-utils or add pdfinfo to PATH.${RESET}\n" >&2
-        return 1
-    fi
-    return 0
-}
-
-# return page count for one PDF
-function GetPageCount {
-    local file="$1" output pages
-
-    output=$(pdfinfo "$file" 2>&1) || {
-        printf "${BOLD_RED}Error:${RESET} pdfinfo failed for ${BOLD_YELLOW}'%s'${RESET}.\n" "$file" >&2
-        return 1
-    }
-
-    pages=$(echo "$output" | awk '/^Pages:/ {print $2}')
-    if ! [[ $pages =~ ^[0-9]+$ ]]; then
-        printf "${BOLD_RED}Error:${RESET} could not parse page count for ${BOLD_YELLOW}'%s'${RESET}.\n" "$file" >&2
-        return 1
-    fi
-
-    echo "$pages"
-    return 0
-}
-
 # main entrypoint
 function pdfpages {
     emulate -L zsh
     setopt extendedglob null_glob
 
+    # color codes
+    local ESC="\033"
+    local RESET="${ESC}[0m"
+    local BOLD_CYAN="${ESC}[1;36m"
+    local DIM_WHITE="${ESC}[2;37m"
+    local DIM_BLUE="${ESC}[2;34m"
+    local GREEN="${ESC}[0;32m"
+    local BOLD_RED="${ESC}[1;31m"
+    local YELLOW="${ESC}[0;33m"
+    local MAGENTA="${ESC}[0;35m"
+
+    # Helpers
+    # ---------
+    # show usage/help
+    function PDFPages_ShowHelp {
+        printf "${BOLD_CYAN}Usage:${RESET} pdfpages ${BOLD_YELLOW}<file|dir>${RESET} ${MAGENTA}[options]${RESET}\n\n"
+        printf "${BOLD_CYAN}Options:${RESET}\n"
+        printf "  ${BOLD_MAGENTA}-n, --no-recursive${RESET}   Do not recurse into subdirectories\n"
+        printf "  ${BOLD_MAGENTA}-h, --help${RESET}           Show this help message and exit\n"
+    }
+
+    # verify pdfinfo is installed
+    function CheckDependencies {
+        if ! command -v pdfinfo >/dev/null 2>&1; then
+            printf "${BOLD_RED}Error:${RESET} pdfinfo not found. ${YELLOW}Install poppler-utils or add pdfinfo to PATH.${RESET}\n" >&2
+            unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
+            return 1
+        fi
+        unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
+        return 0
+    }
+
+    # return page count for one PDF
+    function GetPageCount {
+        local file="$1" output pages
+
+        output=$(pdfinfo "$file" 2>&1) || {
+            printf "${BOLD_RED}Error:${RESET} pdfinfo failed for ${BOLD_YELLOW}'%s'${RESET}.\n" "$file" >&2
+            unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
+            return 1
+        }
+
+        pages=$(echo "$output" | awk '/^Pages:/ {print $2}')
+        if ! [[ $pages =~ ^[0-9]+$ ]]; then
+            printf "${BOLD_RED}Error:${RESET} could not parse page count for ${BOLD_YELLOW}'%s'${RESET}.\n" "$file" >&2
+            unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
+            return 1
+        fi
+
+        echo "$pages"
+        unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
+        return 0
+    }
+
     local total=0 attempted=0 processed=0 pages
 
     if ! CheckDependencies; then
+        unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
         return 1
     fi
 
     if [[ $# -eq 0 ]]; then
         printf "${BOLD_RED}Error:${RESET} missing required argument ${BOLD_YELLOW}'<input>'${RESET}\n"
         printf "${BOLD_CYAN}Usage:${RESET} pdfpages ${BOLD_YELLOW}<file|dir>${RESET} ${MAGENTA}[options]${RESET}\n"
+        unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
         return 1
     fi
 
     if [[ $1 == "-h" || $1 == "--help" ]]; then
         PDFPages_ShowHelp
+        unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
         return 0
     fi
 
@@ -78,6 +88,7 @@ function pdfpages {
             ;;
         -h | --help)
             PDFPages_ShowHelp
+            unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
             return 0
             ;;
         --)
@@ -86,6 +97,7 @@ function pdfpages {
             ;;
         -*)
             printf "${BOLD_RED}Error:${RESET} unknown option ${BOLD_YELLOW}'%s'${RESET}. ${YELLOW}Use 'pdfpages --help'.${RESET}\n" "$1" >&2
+            unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
             return 1
             ;;
         *)
@@ -132,10 +144,16 @@ function pdfpages {
     fi
 
     if ((processed > 0)); then
+
+        unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
         return 0
     fi
 
     printf "${BOLD_RED}Error:${RESET} no PDFs processed successfully\n" >&2
+
+    # cleanup helpers
+    unset -f PDFPages_ShowHelp CheckDependencies GetPageCount
+
     return 1
 }
 
